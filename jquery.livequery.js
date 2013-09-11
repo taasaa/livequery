@@ -53,19 +53,33 @@
             }, this));
             this.stopped = true;
         },
+        matches_selector: function(element) {
+            return $(element, this.context).is(this.selector);
+        },
+        matches_children: function(element) {
+            return $(element, this.context).find(this.selector).length > 0;
+        },
         matches: function(element) {
-            return !this.isStopped() && $(element, this.context).is(this.selector);
+            return !this.isStopped() && (this.matches_selector(element) || this.matches_children(element));
+        },
+        actual_element: function(element) {
+            if (this.matches_selector(element))
+                return $(element, this.context);
+            else if (this.matches_children(element))
+                return $(element, this.context).find(this.selector);
+            else
+                return element;
         },
         added: function(element) {
             if ( !this.isStopped() && !this.isMatched(element) ) {
                 this.markAsMatched(element);
-                this.matchedFn.call(element);
+                this.matchedFn.call(this.actual_element(element));
             }
         },
         removed: function(element) {
             if ( !this.isStopped() && this.isMatched(element) ) {
                 this.removeMatchedMark(element);
-                if (this.unmatchedFn) this.unmatchedFn.call(element);
+                if (this.unmatchedFn) this.unmatchedFn.call(this.actual_element(element));
             }
         },
         getLQArray: function(element) {
